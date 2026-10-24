@@ -40,7 +40,8 @@ def test_dedupe_keeps_sharpest_not_first(sample):
         photo.phash = imagehash.phash(image)
         photos.append(photo)
     assert group_duplicates(photos, 6) == 1
-    assert photos[0].reasons == ['Near-duplicate of 01-sharp.png']
+    assert photos[0].duplicate_group == photos[1].duplicate_group
+    assert not photos[0].reasons
     assert not photos[1].reasons and not photos[2].duplicate_group
 
 
@@ -52,7 +53,7 @@ def test_transitive_dedupe_and_eligible_keeper():
     assert group_duplicates([a, b, c], 1) == 2
     assert len({p.duplicate_group for p in (a, b, c)}) == 1
     assert not b.reasons
-    assert c.reasons == ['Near-duplicate of b.jpg']
+    assert not c.reasons
 
 
 def test_mock_is_monotonic_and_honest():
@@ -163,18 +164,19 @@ def test_corrupt_and_missing_rawpy_are_reported(sample, tmp_path, monkeypatch):
 def test_gemini_without_key_warns_and_falls_back(sample, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     monkeypatch.delenv('GEMINI_API_KEY', raising=False)
-    result = CliRunner().invoke(app, ['run', str(sample), '--out', str(tmp_path / 'out')])
+    result = CliRunner().invoke(app, ['run', str(sample), '--out', str(tmp_path / 'out'), '--provider', 'gemini', '--model', 'gemini-2.5-flash'])
     assert result.exit_code == 0, result.output
     assert 'WARNING' in result.output and 'using mock' in result.output
     assert 'MOCK RUN' in (tmp_path / 'out/report.html').read_text()
 
 
-def test_all_filtered_still_writes_reports(sample, tmp_path, monkeypatch):
+def test_blur_flags_never_prevent_ai_review(sample, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     result = invoke(sample, tmp_path / 'out', '--blur-threshold', '1000000')
     assert result.exit_code == 0, result.output
-    assert 'No photos passed' in (tmp_path / 'out/report.html').read_text()
-    assert not list((tmp_path / 'out').glob('*.png'))
+    rows=list(csv.DictReader((tmp_path / 'out/report.csv').open()))
+    assert all(row['ai score'] for row in rows)
+    assert all(row['picked']=='y' for row in rows)
 
 
 def test_empty_input_is_actionable(tmp_path):

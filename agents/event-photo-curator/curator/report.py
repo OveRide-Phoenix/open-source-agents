@@ -13,6 +13,8 @@ def write_csv(photos: list[Photo], out: Path):
         writer.writerow(FIELDS)
         for photo in photos:
             reason = '; '.join(photo.reasons) or photo.assessment.get('reason', '')
+            if photo.flags:
+                reason += ' | Technical hints: ' + '; '.join(photo.flags)
             row = [photo.path.name, f'{photo.sharpness:.2f}', photo.exposure,
                    photo.duplicate_group, photo.assessment.get('score', ''),
                    reason, photo.assessment.get('caption', ''), 'y' if photo.picked else 'n']
@@ -29,6 +31,8 @@ def write_html(photos: list[Photo], out: Path, provider: str, model: str):
     def card(photo):
         name = escape(photo.path.name)
         reason = '; '.join(photo.reasons) or photo.assessment.get('reason', '')
+        if photo.flags:
+            reason += ' | Technical hints: ' + '; '.join(photo.flags)
         preview = ('<img loading="lazy" src="data:image/jpeg;base64,'
                    + base64.b64encode(photo.preview).decode() + f'" alt="Preview of {name}">') if photo.preview else '<div class="unreadable">Preview unavailable</div>'
         score = photo.assessment.get('score', 'Not AI ranked')

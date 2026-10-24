@@ -111,3 +111,37 @@ def test_alternate_model_does_not_get_flash_only_settings(photos, monkeypatch):
     client.models.generate_content.return_value = fake_response(photos)
     provider.score(photos, 'casual')
     assert client.models.generate_content.call_args.kwargs['config'].thinking_config is None
+
+
+def test_ai_can_rescue_a_low_sharpness_burst_frame(photos,tmp_path):
+    from curator.dedupe import group_duplicates,select_diverse
+    import imagehash
+    first,second=photos[:2]
+    first.phash=second.phash=imagehash.hex_to_hash('0000000000000000')
+    second.sharpness=1
+    second.flags=['Blurry']
+    group_duplicates([first,second],0)
+    class Editorial:
+        name='test-editor';model='test'
+        def score(self,batch,style):
+            return [dict(id=p.digest,score=10 if p is second else 2,reason='Better moment despite softness',caption='Event moment') for p in batch],0
+    rank([first,second],Editorial(),'casual',tmp_path/'cache',1,Console(quiet=True))
+    assert select_diverse([first,second],1)==[second]
+
+
+def test_ollama_uses_images_and_never_cloud(photos,monkeypatch):
+    from curator.providers import OllamaProvider
+    from io import BytesIO
+    photo=photos[0]
+    response={'message':{'content':json.dumps({'assessments':[dict(id=photo.digest,moment=9,composition=6,expressions=6,reason='Visible scene',caption='A moment')]})},'prompt_eval_count':100,'eval_count':50}
+    requests=[]
+    def open_request(request,timeout):
+        requests.append(request)
+        return BytesIO(json.dumps(response).encode())
+    monkeypatch.setattr('urllib.request.urlopen',open_request)
+    result,tokens=OllamaProvider().score([photo],'casual')
+    payload=json.loads(requests[0].data)
+    assert requests[0].full_url=='http://127.0.0.1:11434/api/chat'
+    assert payload['messages'][1]['images'] and payload['format']['type']=='object'
+    assert tokens==150 and result[0]['score']==7
+    with pytest.raises(ValueError):OllamaProvider('gemma4:cloud')

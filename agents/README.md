@@ -46,4 +46,4 @@ agents/<project-slug>/
 
 | Agent Directory | Description | Framework / Stack | Contributor |
 | :--- | :--- | :--- | :--- |
-| [event-photo-curator](event-photo-curator/) | Filter, visually rank, caption, and export event photo picks with an auditable contact sheet. | Python · OpenCV · Gemini / offline mock | [OveRide-Phoenix](https://github.com/OveRide-Phoenix) |
+| *(None yet)* | *Contributions will appear here once approved and merged.* | — | — |

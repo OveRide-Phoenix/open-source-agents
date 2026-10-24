@@ -56,3 +56,10 @@ output/
 *.[pP][nN][gG]
 *.[hH][eE][iI][cC]
 *.[hH][eE][iI][fF]
+
+# Private local gallery state
+.local-event/
+*.sqlite3
+
+# Local submission working notes
+/PR-NOTES.md

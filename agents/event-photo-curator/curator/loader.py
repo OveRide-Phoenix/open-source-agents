@@ -1,6 +1,7 @@
 """Decode previews without changing source files."""
 from dataclasses import dataclass, field
 import hashlib
+import warnings
 from io import BytesIO
 from pathlib import Path
 
@@ -8,6 +9,8 @@ from PIL import Image, ImageOps
 from pillow_heif import register_heif_opener
 
 register_heif_opener()
+Image.MAX_IMAGE_PIXELS = 80_000_000
+warnings.filterwarnings('error', category=Image.DecompressionBombWarning)
 SUPPORTED = {'.jpg', '.jpeg', '.png', '.heic', '.heif', '.raf'}
 
 
@@ -20,12 +23,13 @@ class Photo:
     exposure: str = ''
     phash: object = None
     duplicate_group: str = ''
+    flags: list[str] = field(default_factory=list)
     reasons: list[str] = field(default_factory=list)
     assessment: dict = field(default_factory=dict)
     picked: bool = False
 
 
-def load_image(path: Path) -> Image.Image:
+def load_image(path: Path, max_edge: int = 1024) -> Image.Image:
     if path.suffix.lower() == '.raf':
         try:
             import rawpy
@@ -36,14 +40,14 @@ def load_image(path: Path) -> Image.Image:
             if thumb.format != rawpy.ThumbFormat.JPEG:
                 raise ValueError('RAF has no supported embedded JPEG thumbnail')
             with Image.open(BytesIO(thumb.data)) as source:
-                return normalize(source)
+                return normalize(source, max_edge)
     with Image.open(path) as source:
-        return normalize(source)
+        return normalize(source, max_edge)
 
 
-def normalize(source: Image.Image) -> Image.Image:
+def normalize(source: Image.Image, max_edge: int = 1024) -> Image.Image:
     image = ImageOps.exif_transpose(source)
-    image.thumbnail((1024, 1024), Image.Resampling.LANCZOS)
+    image.thumbnail((max_edge, max_edge), Image.Resampling.LANCZOS)
     # Composite transparency onto white rather than scoring hidden RGB values.
     if image.mode in ('RGBA', 'LA') or 'transparency' in image.info:
         rgba = image.convert('RGBA')

@@ -12,18 +12,24 @@ from .providers import validate_result
 
 
 def cache_key(photo: Photo, provider, caption_style: str) -> str:
-    context = ['curator-v1', photo.digest, provider.name, provider.model, caption_style]
+    context = ['curator-v2-ai-review-all', photo.digest, provider.name, provider.model, caption_style]
     return hashlib.sha256(json.dumps(context, ensure_ascii=True).encode()).hexdigest()
 
 
 def rank(photos: list[Photo], provider, caption_style: str, cache_dir: Path, batch_size: int, console) -> tuple[int, int]:
-    survivors = [p for p in photos if not p.reasons]
+    survivors = sorted((p for p in photos if p.preview and not p.reasons),
+                       key=lambda p: (bool(p.flags), -p.sharpness, p.path.name))
     if not survivors:
         return 0, 0
     cache_dir.mkdir(parents=True, exist_ok=True)
     pending = []
+    aliases = {}
     tokens = hits = 0
     for photo in survivors:
+        if photo.digest in aliases:
+            aliases[photo.digest].append(photo)
+            continue
+        aliases[photo.digest] = [photo]
         path = cache_dir / (cache_key(photo, provider, caption_style) + '.json')
         try:
             photo.assessment = validate_result(json.loads(path.read_text(encoding='utf-8')), photo.digest)
@@ -48,4 +54,7 @@ def rank(photos: list[Photo], provider, caption_style: str, cache_dir: Path, bat
                 os.replace(temporary, path)
             finally:
                 Path(temporary).unlink(missing_ok=True)
+    for members in aliases.values():
+        for photo in members[1:]:
+            photo.assessment = members[0].assessment
     return tokens, hits

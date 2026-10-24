@@ -1,4 +1,4 @@
-"""Connected perceptual-hash groups, keeping the sharpest eligible member."""
+"""Connected perceptual-hash groups, used as diversity hints, never hard rejection."""
 from .loader import Photo
 
 
@@ -25,11 +25,22 @@ def group_duplicates(photos: list[Photo], distance: int) -> int:
         if len(members) < 2:
             continue
         group = f'burst-{members[0].path.name}'
-        eligible = [p for p in members if not p.reasons]
-        keeper = max(eligible, key=lambda p: p.sharpness) if eligible else None
+        duplicates += len(members) - 1
         for photo in members:
             photo.duplicate_group = group
-            if keeper is not None and photo is not keeper:
-                photo.reasons.append(f'Near-duplicate of {keeper.path.name}')
-                duplicates += 1
     return duplicates
+
+
+def select_diverse(photos: list[Photo], top: int) -> list[Photo]:
+    """Prioritize different groups, then fill available slots by AI score."""
+    ranked = sorted((p for p in photos if p.assessment),
+                    key=lambda p: (-p.assessment['score'], -p.sharpness, p.path.name))
+    selected, deferred, seen = [], [], set()
+    for photo in ranked:
+        group = photo.duplicate_group or photo.digest
+        if group in seen:
+            deferred.append(photo)
+        else:
+            selected.append(photo)
+            seen.add(group)
+    return (selected[:top] + deferred[:max(0, top - len(selected))])[:top]
