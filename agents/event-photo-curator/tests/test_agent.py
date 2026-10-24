@@ -110,3 +110,32 @@ def test_face_matches_have_coordinates_one_target_per_person_and_ambiguity():
         and result[0]["ambiguous"]
     )
     assert not match_faces(refs, [{"embedding": [0, 1], "box": [0, 0, 0.2, 0.2]}], 0.45)
+
+
+@pytest.mark.parametrize("content", ["", "  ", None])
+@pytest.mark.parametrize("photo_ids", [[], ["real-photo-a", "real-photo-b"]])
+def test_successful_face_results_survive_empty_model_narration(
+    monkeypatch, content, photo_ids
+):
+    replies = iter(
+        [
+            (call("count_faces", {"min_faces": 2}), 20),
+            ({"role": "assistant", "content": content}, 10),
+        ]
+    )
+    chat = Mock(side_effect=lambda *a, **k: next(replies))
+    monkeypatch.setattr("curator.agent.ollama_chat", chat)
+    tool = Mock(
+        return_value={
+            "photos": [{"id": p} for p in photo_ids],
+            "summary": "Counted detectable faces in the event.",
+        }
+    )
+    result = PhotoAgent().run("Photos with multiple faces", {"count_faces": tool})
+    assert result["answer"].strip()
+    assert str(len(photo_ids)) in result["answer"]
+    assert [p["id"] for p in result["photos"]] == photo_ids
+    assert result["trace"][0]["tool"] == "count_faces"
+    assert result["tokens"] == 30 and result["steps"] == 2
+    tool.assert_called_once_with(min_faces=2)
+    assert chat.call_count == 2

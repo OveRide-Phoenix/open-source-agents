@@ -516,3 +516,54 @@ def test_agent_api_uses_real_tool_results_and_preserves_gallery(
         and answer["tokens"] == 10
     )
     assert client.get("/api/state").json()["count"] == 1
+
+
+def test_agent_face_count_api_returns_photos_when_final_message_is_empty(
+    local, sample, monkeypatch
+):
+    client, _ = local
+    photo_id = upload(client, sample / "01-sharp.png").json()["added"][0]
+
+    class Detector:
+        def __init__(self, folder):
+            pass
+
+        def detect(self, image):
+            return [{"box": [0.1, 0.1, 0.2, 0.2]}, {"box": [0.5, 0.1, 0.2, 0.2]}]
+
+    monkeypatch.setattr("curator.web.FaceMatcher", Detector)
+    replies = iter(
+        [
+            (
+                {
+                    "role": "assistant",
+                    "tool_calls": [
+                        {
+                            "function": {
+                                "name": "count_faces",
+                                "arguments": {"min_faces": 2},
+                            }
+                        }
+                    ],
+                },
+                10,
+            ),
+            ({"role": "assistant", "content": ""}, 5),
+        ]
+    )
+    monkeypatch.setattr("curator.agent.ollama_chat", lambda *a, **k: next(replies))
+    assert (
+        client.post(
+            "/api/agent", headers=HEADERS, json={"query": "Photos with multiple faces"}
+        ).status_code
+        == 200
+    )
+    assert not await_job(client)["job"]["error"]
+    result = client.get("/api/agent").json()["result"]
+    assert [p["id"] for p in result["photos"]] == [photo_id]
+    assert (
+        result["photos"][0]["face_count"] == 2
+        and len(result["photos"][0]["detected_faces"]) == 2
+    )
+    assert result["answer"].strip() and "1 candidate photos" in result["answer"]
+    assert result["trace"][0]["tool"] == "count_faces"

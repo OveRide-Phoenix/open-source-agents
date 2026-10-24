@@ -136,6 +136,7 @@ class PhotoAgent:
         trace = []
         tokens = 0
         photos = []
+        last_result = {}
         called = set()
         for step in range(self.max_steps):
             check()
@@ -150,7 +151,16 @@ class PhotoAgent:
                     )
                 answer = message.get("content", "")
                 if not isinstance(answer, str) or not answer.strip():
-                    raise RuntimeError("Agent returned an empty answer.")
+                    # Successful tools remain useful even when Gemma omits final narration.
+                    if "photos" in last_result:
+                        answer = f"Found {len(photos)} candidate photos matching your request."
+                    elif "count" in last_result:
+                        answer = f"This event contains {last_result['count']} photos."
+                    else:
+                        answer = "The requested event check completed."
+                    summary = trace[-1]["summary"]
+                    if isinstance(summary, str) and summary.strip():
+                        answer += " " + summary.strip()
                 return {
                     "answer": answer[:3000],
                     "photos": photos,
@@ -210,6 +220,7 @@ class PhotoAgent:
                 result = executors[name](**args)
                 if not isinstance(result, dict):
                     raise RuntimeError("Invalid tool result.")
+                last_result = result
                 photos = result.get("photos", photos)
                 event = {
                     "tool": name,

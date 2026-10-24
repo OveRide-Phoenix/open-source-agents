@@ -216,7 +216,7 @@ python -m pip install 'pytest>=8,<10' 'httpx>=0.28,<1'
 python -m pytest -q
 ```
 
-Generated fixtures cover blur/exposure measurements, grouping, rescue of a soft but highly AI-rated frame, model response validation, bounded retries, cache reuse, image orientation/metadata, HEIC, simulated RAF, CLI/report output, HTML/CSV injection protection, consent, uploads, pagination, original integrity, watermark attribution, ZIP downloads, loopback sessions/CSRF, cancellation and failure recovery. The current automated suite has 66 passing cases on Python 3.12; the earlier 54-case suite also passed on Python 3.11. Tests make no real AI/network requests. Model download and manual inference checks are separate.
+Generated fixtures cover blur/exposure measurements, grouping, rescue of a soft but highly AI-rated frame, model response validation, bounded retries, cache reuse, image orientation/metadata, HEIC, simulated RAF, CLI/report output, HTML/CSV injection protection, consent, uploads, pagination, original integrity, watermark attribution, ZIP downloads, loopback sessions/CSRF, cancellation and failure recovery. The current automated suite has 73 passing cases on Python 3.12; the earlier 54-case suite also passed on Python 3.11. Tests make no real AI/network requests. Model download and manual inference checks are separate.
 
 A repeatable synthetic ingestion benchmark is available with `python -m tests.benchmark_local`. On this 16 GB macOS laptop, 100 generated 960×640 JPEGs imported in 2.06 seconds; the 48-photo metadata response was 12,865 bytes and took 1.6 ms in the local test client. All thumbnails totalled 4,242,970 bytes versus 50,323,645 bytes of originals (8.4%). These historical figures used the former 480px/quality-75 thumbnails; they do not describe the current higher-quality preview setting or real-event AI throughput.
 
@@ -275,4 +275,6 @@ The current-event organizer demo imported 28 JPEGs from an explicitly supplied l
 
 The compact interface uses beUI TodoList for processing, PromptInput for the floating organizer composer, and MessageBubble for the current reply. Previous replies are cleared when a new request starts, and dismissed replies are not restored after reload. Attendees have a separate photo-first view. All event photos, references, model weights and local results remain outside the contribution.
 
-Final source-only clean-install check: all declared Python requirements installed into an empty Python 3.12 environment, all 66 tests passed, and the generated six-photo mock run produced two picks and CSV/HTML reports. Application Python/React/CSS files were formatted before the final build checks.
+Final source-only clean-install check: all declared Python requirements installed into an empty Python 3.12 environment, all 73 tests passed, and the generated six-photo mock run produced two picks and CSV/HTML reports. Application Python/React/CSS files were formatted before the final build checks.
+
+If Gemma omits its final narration after a successful tool call, the agent returns a deterministic summary and candidate count from the completed tool result. An empty response before any tool runs still fails; tool errors are not hidden. Regression coverage includes empty/whitespace/missing narration, zero and nonzero face-search results, and the full face-count API path.
