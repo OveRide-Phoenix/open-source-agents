@@ -1,6 +1,8 @@
-# Event Photo Curator
+# AfterClick
 
-> A local event-photo agent: bring photos together, let AI choose the moments, find consenting people, and download original-quality files.
+AfterClick is a local-first, privacy-focused app that helps organisers turn an overwhelming event gallery into a varied shortlist of memorable moments, and lets attendees find photos featuring themselves through opt-in face matching. Built for ease of use, it combines local Gemma 4 vision with OpenCV and ImageHash to assess photos, group similar shots, suggest captions, and preserve original-quality downloads—saving everyone time on the eternal “which one should I post?”
+
+[View the AfterClick pitch deck and UI flows](AfterClick-Demo.pdf)
 
 ## Overview
 

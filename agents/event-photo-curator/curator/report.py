@@ -51,7 +51,7 @@ def write_html(photos: list[Photo], out: Path, provider: str, model: str):
     page = '''<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; base-uri 'none'">
-<title>Event Photo Curator report</title><style>
+<title>AfterClick report</title><style>
 *{box-sizing:border-box}body{margin:0;background:#f4f3ef;color:#202522;font:16px/1.5 system-ui,sans-serif}
 main{max-width:1400px;margin:auto;padding:40px 24px}h1{font-size:clamp(28px,5vw,48px);margin:0}h2{margin-top:40px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr));gap:20px}
@@ -61,7 +61,7 @@ img,.unreadable{width:100%;height:220px;object-fit:contain;background:#e4e7e1}.u
 p{margin:8px 0;overflow-wrap:anywhere}.technical,.caption{font-size:14px;color:#505950}.warning{background:#fff0bc;padding:16px;border-radius:8px}
 a{color:#205936;text-underline-offset:3px}a:focus-visible{outline:3px solid #205936;outline-offset:4px}
 </style></head><body><main>'''
-    page += (f'<h1>Event Photo Curator</h1><p>{len(photos)} scanned · {len(picked)} picks · {len(rejected)} rejects</p>'
+    page += (f'<h1>AfterClick</h1><p>{len(photos)} scanned · {len(picked)} picks · {len(rejected)} rejects</p>'
              f'<p>Provider: {escape(provider)} · Model: {escape(model)}</p>{warning}'
              '<p>Scores are editorial suggestions. Review captions and consent before sharing. Original copies retain their metadata.</p>'
              f'<h2>Picks ({len(picked)})</h2><section class="grid" aria-label="Picked photos">'

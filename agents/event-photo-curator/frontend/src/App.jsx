@@ -343,6 +343,7 @@ export default function App({ initialRole } = {}) {
   const [findMode, setFindMode] = useState("event");
   const [pair, setPair] = useState(null);
   const [prompt, setPrompt] = useState("");
+  const [activeRequest, setActiveRequest] = useState("");
   const [next, setNext] = useState(0);
   const [more, setMore] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -445,6 +446,7 @@ export default function App({ initialRole } = {}) {
         body: JSON.stringify({ query }),
       });
       priorJob.current = true;
+      setActiveRequest(query.trim());
       setResult(null);
       setMode("all");
       setPrompt("");
@@ -592,7 +594,7 @@ export default function App({ initialRole } = {}) {
         <a className="wordmark" href={organizer ? "/organizer" : "/attendee"}>
           <Aperture size={24} />
           <span>
-            Event Photo Curator
+            AfterClick
             <small>{organizer ? "ORGANIZER STUDIO" : "EVENT GALLERY"}</small>
           </span>
         </a>
@@ -903,6 +905,12 @@ export default function App({ initialRole } = {}) {
                 <strong>Event agent</strong>
                 <span>Local Gemma</span>
               </div>
+              {activeRequest && (
+                <div className="active-request" aria-label="Current request">
+                  <span>Your request</span>
+                  <p>{activeRequest}</p>
+                </div>
+              )}
               {job.running && (
                 <TodoList
                   items={tasks}
@@ -929,6 +937,7 @@ export default function App({ initialRole } = {}) {
                       aria-label="Dismiss response"
                       onClick={() => {
                         setResult(null);
+                        setActiveRequest("");
                         setMode("all");
                       }}
                     >

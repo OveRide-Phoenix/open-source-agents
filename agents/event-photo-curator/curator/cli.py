@@ -155,7 +155,7 @@ def run(
             )
     write_csv(records, destination)
     write_html(records, destination, scorer.name, scorer.model)
-    table = Table(title="Event Photo Curator")
+    table = Table(title="AfterClick")
     table.add_column("Metric")
     table.add_column("Count", justify="right")
     for label, count in [

@@ -87,6 +87,7 @@ test("production entry uses bundled local assets and ships dark mode", async () 
     "utf8",
   );
   assert.match(html, /class="dark"/);
+  assert.match(html, /<title>AfterClick<\/title>/);
   assert.match(html, /name="color-scheme" content="dark"/);
   const assets = [...html.matchAll(/(?:src|href)="(\/static\/[^\"]+)"/g)].map(
     (m) => m[1],
@@ -109,6 +110,8 @@ test("attendee screen has only gallery and face search; organizer has import and
   const organizer = renderToStaticMarkup(
     createElement(ui.default, { initialRole: "/organizer" }),
   );
+  assert.match(organizer, /AfterClick/);
+  assert.doesNotMatch(organizer, /Event Photo Curator/);
   assert.match(organizer, /Import folder/);
   assert.match(organizer, /Ask the event agent/);
   assert.match(organizer, /Photo directory on this laptop/);

@@ -95,7 +95,7 @@ def create_app(data: Path) -> FastAPI:
             faces TEXT, width INTEGER NOT NULL, height INTEGER NOT NULL)""")
 
     app = FastAPI(
-        title="Event Photo Curator, local pilot",
+        title="AfterClick, local pilot",
         docs_url=None,
         redoc_url=None,
         openapi_url=None,
